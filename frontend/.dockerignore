@@ -1,0 +1,12 @@
+node_modules
+.next
+next-env.d.ts
+e2e
+out
+build
+coverage
+test-results
+playwright-report
+config.yaml
+*.log
+.DS_Store

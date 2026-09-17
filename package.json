@@ -1,0 +1,20 @@
+{
+  "name": "admin-base",
+  "version": "0.1.0",
+  "private": true,
+  "description": "独立的前后端通用后台底座",
+  "license": "UNLICENSED",
+  "packageManager": "pnpm@11.17.0",
+  "scripts": {
+    "setup": "pnpm --dir backend install --frozen-lockfile && pnpm --dir frontend install --frozen-lockfile",
+    "dev:backend": "pnpm --dir backend dev:api",
+    "dev:frontend": "pnpm --dir frontend dev",
+    "db:migrate": "pnpm --dir backend db:migrate",
+    "seed:admin": "pnpm --dir backend seed:admin",
+    "lint": "pnpm --dir backend lint:check && pnpm --dir frontend lint",
+    "build": "pnpm --dir backend build && pnpm --dir frontend build",
+    "test": "pnpm --dir backend test --runInBand",
+    "test:api": "node tests/api-smoke.mjs",
+    "test:e2e": "pnpm --dir frontend test:e2e"
+  }
+}

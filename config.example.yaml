@@ -1,0 +1,39 @@
+# 复制为本目录 config.yaml。前后端只使用底座自己的配置。
+app:
+  port: 3100
+  globalPrefix: ''
+  openApiEnabled: true
+  trustedProxyHops: 0
+  corsOrigins:
+    - http://localhost:3101
+    - http://127.0.0.1:3101
+
+frontend:
+  # null：使用当前页面协议和主机 + apiPort。
+  # 独立 API 域名或 globalPrefix 非空时填写包含前缀的完整 API 地址。
+  apiUrl: null
+  apiPort: 3100
+  allowedDevOrigins: []
+
+db:
+  host: 127.0.0.1
+  port: 55432
+  user: admin_base
+  password: admin_base
+  database: admin_base
+
+redis:
+  host: 127.0.0.1
+  port: 56379
+  password: null
+  db: 0
+
+jwt:
+  secret: admin-base-change-this-secret-before-production
+  expiresIn: 7d
+  authorizationCacheTtlSeconds: 60
+
+bootstrap:
+  admin:
+    username: admin
+    password: admin123456
