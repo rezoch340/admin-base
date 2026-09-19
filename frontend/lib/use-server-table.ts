@@ -40,7 +40,6 @@ export interface ServerTable<Row, Filters> {
     rows: Row[];
     isLoading: boolean;
     transitionKey: string;
-    transitionDirection: 'forward' | 'backward';
   };
   paginationProps: {
     page: number;
@@ -67,18 +66,12 @@ export function useServerTable<Row, Filters extends object>({
 }): ServerTable<Row, Filters> {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  // 翻页方向:往后翻表体从右侧进,往回翻从左侧进
-  const [transitionDirection, setTransitionDirection] = useState<
-    'forward' | 'backward'
-  >('forward');
   const queryClient = useQueryClient();
   const filters = useFilterState(emptyFilters, {
     onApply: () => {
-      setTransitionDirection('forward');
       setPage(1);
     },
     onReset: () => {
-      setTransitionDirection('forward');
       setPage(1);
       void refreshTableData(queryClient, [resourceKey]);
     },
@@ -114,7 +107,6 @@ export function useServerTable<Row, Filters extends object>({
       isLoading: tableQuery.isLoading,
       // 只在真正切页或换筛选时变;后台轮询拿到同一页不会重放动画
       transitionKey: `${resolvedPage}-${JSON.stringify(filters.applied)}`,
-      transitionDirection,
     },
     paginationProps: {
       page: tableQuery.data?.page ?? page,
@@ -122,8 +114,6 @@ export function useServerTable<Row, Filters extends object>({
       total: tableQuery.data?.total ?? 0,
       isPageTransitioning: tableQuery.isPlaceholderData,
       onPageChange: (nextPage: number) => {
-        // 方向在点击那一刻就定了,不必等数据回来再比对
-        setTransitionDirection(nextPage >= page ? 'forward' : 'backward');
         setPage(nextPage);
       },
       onPageSizeChange: (newPageSize: number) => {
