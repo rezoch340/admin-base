@@ -10,6 +10,7 @@ export interface FilterState<Filters> {
   update: (key: keyof Filters, value: string) => void;
   apply: () => void;
   reset: () => void;
+  applyPatch: (patch: Partial<Filters>) => void;
 }
 
 // 约束用 object 而非 Record<string, string>:各页的筛选是 interface,没有索引签名,收不进后者
@@ -28,6 +29,13 @@ export function useFilterState<Filters extends object>(
       setDraft((currentFilters) => ({ ...currentFilters, [key]: value })),
     apply: () => {
       setApplied(draft);
+      callbacks.onApply?.();
+    },
+    // 一次改好几个再直接查,给「最近 1 小时」这类快捷按钮用
+    applyPatch: (patch) => {
+      const next = { ...draft, ...patch };
+      setDraft(next);
+      setApplied(next);
       callbacks.onApply?.();
     },
     reset: () => {

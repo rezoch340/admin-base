@@ -34,11 +34,26 @@ export function EmptyTableState({
   );
 }
 
-export function QueryErrorState({ message }: { message?: string }) {
+export function QueryErrorState({
+  message,
+  onRetry,
+}: {
+  message?: string;
+  onRetry?: () => void;
+}) {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
       <AlertCircle className="size-4 shrink-0" />
-      {message ?? '数据加载失败，请稍后重试'}
+      <span className="flex-1">{message ?? '数据加载失败，请稍后重试'}</span>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          className="rounded-md border border-destructive/30 px-2 py-1 text-xs hover:bg-destructive/10"
+        >
+          重试
+        </button>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { RotateCcw, Search } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { ChevronDown, RotateCcw, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -31,27 +32,35 @@ export function FilterBar<FilterKey extends string>({
   onChange,
   onSubmit,
   onReset,
+  advancedKeys = [],
+  extra,
 }: {
   fields: Array<FilterFieldDefinition<FilterKey>>;
   values: Record<FilterKey, string>;
   onChange: (key: FilterKey, value: string) => void;
   onSubmit: () => void;
   onReset: () => void;
+  // 这些字段收进「高级筛选」,默认折叠;有值时自动展开
+  advancedKeys?: FilterKey[];
+  // 塞在按钮行左边的东西,比如时间快捷范围
+  extra?: ReactNode;
 }) {
-  return (
-    <form
-      className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
-      onSubmit={(formEvent) => {
-        formEvent.preventDefault();
-        onSubmit();
-      }}
-    >
-      {fields.map((field) => (
+  const advancedFields = fields.filter((field) => advancedKeys.includes(field.key));
+  const primaryFields = fields.filter((field) => !advancedKeys.includes(field.key));
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(() =>
+    advancedFields.some((field) => values[field.key]),
+  );
+  const showAdvanced =
+    isAdvancedOpen || advancedFields.some((field) => values[field.key]);
+
+  const renderField = (field: FilterFieldDefinition<FilterKey>) => (
         <div key={field.key} className="space-y-2">
           <Label htmlFor={`filter-${field.key}`}>{field.label}</Label>
           {field.type === 'select' ? (
             <Select
               value={values[field.key] || null}
+              // items 让触发器显示中文标签,而不是提交给接口的原始值
+              items={field.options}
               onValueChange={(selectedValue) =>
                 onChange(
                   field.key,
@@ -89,16 +98,49 @@ export function FilterBar<FilterKey extends string>({
             />
           )}
         </div>
-      ))}
-      <div className="col-span-full flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onReset}>
-          <RotateCcw />
-          重置
-        </Button>
-        <Button type="submit">
-          <Search />
-          查询
-        </Button>
+  );
+
+  return (
+    <form
+      className="grid gap-3 rounded-2xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+      onSubmit={(formEvent) => {
+        formEvent.preventDefault();
+        onSubmit();
+      }}
+    >
+      {primaryFields.map(renderField)}
+      {advancedFields.length > 0 && showAdvanced && (
+        <div className="col-span-full grid gap-3 border-t pt-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {advancedFields.map(renderField)}
+        </div>
+      )}
+      <div className="col-span-full flex flex-wrap items-center gap-2">
+        {extra}
+        {advancedFields.length > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-expanded={showAdvanced}
+            className="text-muted-foreground"
+            onClick={() => setIsAdvancedOpen((current) => !current)}
+          >
+            高级筛选
+            <ChevronDown
+              className={showAdvanced ? 'rotate-180 transition-transform' : 'transition-transform'}
+            />
+          </Button>
+        )}
+        <span className="ml-auto flex gap-2">
+          <Button type="button" variant="outline" onClick={onReset}>
+            <RotateCcw />
+            重置
+          </Button>
+          <Button type="submit">
+            <Search />
+            查询
+          </Button>
+        </span>
       </div>
     </form>
   );

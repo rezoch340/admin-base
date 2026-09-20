@@ -318,7 +318,12 @@ export default function PermissionGroupsPage() {
         }
       />
       {groupTable.isError || permissionTable.isError ? (
-        <QueryErrorState />
+        <QueryErrorState
+          onRetry={() => {
+            groupTable.filterBarProps.onSubmit();
+            permissionTable.filterBarProps.onSubmit();
+          }}
+        />
       ) : null}
       <section className="space-y-3">
         <h2 className="font-heading text-lg font-semibold">权限组列表</h2>

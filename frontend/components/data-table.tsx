@@ -26,6 +26,7 @@ export function DataTable<RowType>({
   footer,
   tableClassName,
   transitionKey,
+  bodyMaxHeight,
 }: {
   columns: Array<DataTableColumn<RowType>>;
   rows: RowType[];
@@ -37,17 +38,23 @@ export function DataTable<RowType>({
   // 变化即重挂表体、重放入场动画。只在真正切页/换筛选时变，
   // 15 秒的后台轮询拿到同一页不会触发，避免表格自己闪
   transitionKey?: string | number;
+  // 长列表让表体自己滚,表头钉住、页脚分页一直可见
+  bodyMaxHeight?: string;
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <Table className={tableClassName}>
-        <TableHeader>
+    <div className="overflow-hidden rounded-2xl border bg-card">
+      <Table
+        className={tableClassName}
+        containerClassName={bodyMaxHeight ? combineClassNames('overflow-auto', bodyMaxHeight) : undefined}
+      >
+        <TableHeader className={bodyMaxHeight ? 'sticky top-0 z-10 bg-card' : undefined}>
           <TableRow className="bg-muted/40 hover:bg-muted/40">
             {columns.map((column) => (
               <TableHead
                 key={column.key}
                 className={combineClassNames(
                   'whitespace-nowrap text-xs font-semibold text-muted-foreground',
+                  bodyMaxHeight && 'bg-muted/40 backdrop-blur',
                   column.className,
                 )}
               >

@@ -305,7 +305,9 @@ export default function UsersPage() {
           ) : undefined
         }
       />
-      {table.isError ? <QueryErrorState /> : null}
+      {table.isError ? (
+        <QueryErrorState onRetry={() => table.filterBarProps.onSubmit()} />
+      ) : null}
       <FilterBar
         fields={FILTER_FIELDS}
         {...table.filterBarProps}
