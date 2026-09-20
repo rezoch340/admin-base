@@ -10,6 +10,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from '@/components/ui/select';
+import { useI18n } from '@/lib/i18n';
 
 type PaginationItem = number | 'leading-ellipsis' | 'trailing-ellipsis';
 
@@ -64,6 +65,7 @@ export function Pagination({
   onPageSizeChange: (pageSize: number) => void;
 }) {
   const [jumpPage, setJumpPage] = useState('');
+  const { translate } = useI18n();
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const currentPage = Math.min(page, totalPages);
   const firstItemNumber = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -82,13 +84,17 @@ export function Pagination({
   return (
     <div className="flex flex-col gap-3 text-sm text-muted-foreground xl:flex-row xl:items-center xl:justify-between">
       <span className="whitespace-nowrap">
-        第 {firstItemNumber}-{lastItemNumber} 条 / 共 {total} 条
+        {translate('pagination.summary', {
+          from: firstItemNumber,
+          to: lastItemNumber,
+          total,
+        })}
       </span>
       <div className="flex flex-wrap items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="上一页"
+          aria-label={translate('pagination.previous')}
           disabled={currentPage <= 1 || isPageTransitioning}
           onClick={() => onPageChange(currentPage - 1)}
         >
@@ -106,7 +112,7 @@ export function Pagination({
                   ? 'border-primary text-primary hover:bg-primary/5 hover:text-primary'
                   : undefined
               }
-              aria-label={`第 ${pageItem} 页`}
+              aria-label={translate('pagination.page', { page: pageItem })}
               aria-current={pageItem === currentPage ? 'page' : undefined}
               disabled={isPageTransitioning}
               onClick={() => onPageChange(pageItem)}
@@ -126,7 +132,7 @@ export function Pagination({
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="下一页"
+          aria-label={translate('pagination.next')}
           disabled={currentPage >= totalPages || isPageTransitioning}
           onClick={() => onPageChange(currentPage + 1)}
         >
@@ -144,20 +150,22 @@ export function Pagination({
           <SelectTrigger
             size="sm"
             className="ml-1 w-28"
-            aria-label="每页条数"
+            aria-label={translate('pagination.pageSize')}
           >
-            <span>{pageSize} 条/页</span>
+            <span>{translate('pagination.perPage', { size: pageSize })}</span>
           </SelectTrigger>
           <SelectContent>
             {[10, 20, 50, 100].map((pageSizeOption) => (
               <SelectItem key={pageSizeOption} value={String(pageSizeOption)}>
-                {pageSizeOption} 条/页
+                {translate('pagination.perPage', { size: pageSizeOption })}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <form className="ml-1 flex items-center gap-1.5" onSubmit={jumpToPage}>
-          <span className="whitespace-nowrap">跳至</span>
+          <span className="whitespace-nowrap">
+            {translate('pagination.jumpTo')}
+          </span>
           <Input
             className="w-16 text-center"
             type="number"
@@ -165,10 +173,10 @@ export function Pagination({
             max={totalPages}
             value={jumpPage}
             disabled={isPageTransitioning}
-            aria-label="跳转页码"
+            aria-label={translate('pagination.jumpInput')}
             onChange={(changeEvent) => setJumpPage(changeEvent.target.value)}
           />
-          <span>页</span>
+          <span>{translate('pagination.pageUnit')}</span>
         </form>
       </div>
     </div>

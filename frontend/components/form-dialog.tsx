@@ -11,13 +11,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { combineClassNames } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
 
 export function FormDialog({
   open,
   onOpenChange,
   title,
   description,
-  submitLabel = '保存',
+  submitLabel,
   isSubmitting,
   submitDisabled = false,
   onSubmit,
@@ -39,6 +40,7 @@ export function FormDialog({
   // 内容区自己滚,页脚的保存/取消始终看得见;给值很长的表单用
   fillHeight?: boolean;
 }) {
+  const { translate } = useI18n();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -73,10 +75,12 @@ export function FormDialog({
               disabled={isSubmitting}
               onClick={() => onOpenChange(false)}
             >
-              取消
+              {translate('common.cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting || submitDisabled}>
-              {isSubmitting ? '提交中…' : submitLabel}
+              {isSubmitting
+                ? translate('common.submitting')
+                : (submitLabel ?? translate('common.save'))}
             </Button>
           </DialogFooter>
         </form>

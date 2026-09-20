@@ -13,6 +13,7 @@
     "lint": "node test/assert-readable-source.cjs && eslint .",
     "lint:fix": "node test/assert-readable-source.cjs && eslint . --fix",
     "test:e2e": "node test/assert-blackbox-e2e.cjs && playwright test",
+    "test:unit": "node --test test/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -11,26 +11,33 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { useAuthentication } from '@/lib/auth';
+import { useI18n, type MessageKey } from '@/lib/i18n';
 
-const MANAGEMENT_ENTRIES = [
+const MANAGEMENT_ENTRIES: Array<{
+  href: string;
+  title: MessageKey;
+  description: MessageKey;
+  subject: string;
+  icon: typeof Users;
+}> = [
   {
     href: '/users',
-    title: '后台账号',
-    description: '管理账号资料、启用状态和用户权限组。',
+    title: 'nav.users',
+    description: 'home.usersDescription',
     subject: 'user',
     icon: Users,
   },
   {
     href: '/permission-groups',
-    title: '权限组',
-    description: '维护权限目录，按角色分配操作与资源权限。',
+    title: 'nav.permissionGroups',
+    description: 'home.permissionGroupsDescription',
     subject: 'rbac',
     icon: ShieldCheck,
   },
   {
     href: '/system-logs',
-    title: '系统日志',
-    description: '查看登录、后台访问和管理操作的审计记录。',
+    title: 'nav.systemLogs',
+    description: 'home.systemLogsDescription',
     subject: 'system-log',
     icon: FileClock,
   },
@@ -38,6 +45,7 @@ const MANAGEMENT_ENTRIES = [
 
 export default function DashboardPage() {
   const { user, can, isRoot } = useAuthentication();
+  const { translate } = useI18n();
   const visibleEntries = MANAGEMENT_ENTRIES.filter((entry) =>
     can('read', entry.subject),
   );
@@ -46,23 +54,27 @@ export default function DashboardPage() {
     <>
       <PageHeader
         eyebrow="Admin Base"
-        title="后台首页"
-        description={`欢迎，${user?.username ?? ''}。从这里进入账号、权限和系统日志管理。`}
+        title={translate('nav.home')}
+        description={translate('home.welcome', {
+          username: user?.username ?? '',
+        })}
       />
       <Card>
         <CardHeader>
-          <CardTitle>当前账号</CardTitle>
+          <CardTitle>{translate('home.currentAccount')}</CardTitle>
           <CardDescription>
-            {isRoot ? '种子管理员拥有全部后台管理权限。' : '以下入口根据你的账号权限显示。'}
+            {isRoot
+              ? translate('home.rootHint')
+              : translate('home.permissionHint')}
           </CardDescription>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           {visibleEntries.length > 0
-            ? '选择一个管理入口开始工作。'
-            : '当前账号尚未分配管理权限，请联系管理员。'}
+            ? translate('home.pickEntry')
+            : translate('home.noPermission')}
         </CardContent>
       </Card>
-      <section className="grid gap-4 md:grid-cols-3" aria-label="管理入口">
+      <section className="grid gap-4 md:grid-cols-3" aria-label={translate('home.entries')}>
         {visibleEntries.map((entry) => {
           const EntryIcon = entry.icon;
           return (
@@ -73,8 +85,10 @@ export default function DashboardPage() {
                     <EntryIcon className="size-6" />
                     <ArrowUpRight className="size-4" />
                   </div>
-                  <CardTitle>{entry.title}</CardTitle>
-                  <CardDescription>{entry.description}</CardDescription>
+                  <CardTitle>{translate(entry.title)}</CardTitle>
+                  <CardDescription>
+                    {translate(entry.description)}
+                  </CardDescription>
                 </CardHeader>
               </Card>
             </Link>

@@ -4,17 +4,20 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Blocks, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ApiRequestError } from '@/lib/api-client';
 import { useAuthentication } from '@/lib/auth';
+import { useI18n } from '@/lib/i18n';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user, login } = useAuthentication();
+  const { translate } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
@@ -26,7 +29,7 @@ export default function LoginPage() {
   async function submitLogin(formEvent: React.FormEvent<HTMLFormElement>) {
     formEvent.preventDefault();
     if (!username.trim() || !password) {
-      toast.error('请输入用户名和密码');
+      toast.error(translate('login.missingCredentials'));
       return;
     }
 
@@ -38,7 +41,7 @@ export default function LoginPage() {
       toast.error(
         error instanceof ApiRequestError
           ? error.message
-          : '登录失败，请稍后重试',
+          : translate('login.failed'),
       );
     } finally {
       setIsSubmitting(false);
@@ -50,6 +53,7 @@ export default function LoginPage() {
       <section className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-sm">
           <div className="mb-12 flex items-center gap-3">
+            <LocaleSwitcher className="order-last ml-auto" />
             <span className="flex size-10 items-center justify-center rounded-xl bg-[#0b1a20] text-cyan-300">
               <Blocks className="size-5" />
             </span>
@@ -65,16 +69,16 @@ export default function LoginPage() {
 
           <div className="mb-8 space-y-2">
             <h1 className="font-heading text-3xl font-semibold tracking-tight">
-              登录控制台
+              {translate('login.title')}
             </h1>
             <p className="text-sm leading-6 text-slate-500">
-              使用后台账号登录，管理用户、权限与系统日志。
+              {translate('login.description')}
             </p>
           </div>
 
           <form className="space-y-5" onSubmit={submitLogin}>
             <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
+              <Label htmlFor="username">{translate('common.username')}</Label>
               <Input
                 id="username"
                 value={username}
@@ -85,7 +89,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
+              <Label htmlFor="password">{translate('common.password')}</Label>
               <Input
                 id="password"
                 type="password"
@@ -101,7 +105,9 @@ export default function LoginPage() {
               className="h-11 w-full"
               disabled={isSubmitting}
             >
-              {isSubmitting ? '登录中…' : '登录'}
+              {isSubmitting
+                ? translate('login.submitting')
+                : translate('login.submit')}
             </Button>
           </form>
         </div>
@@ -130,13 +136,12 @@ export default function LoginPage() {
             Administration Console
           </p>
           <h2 className="mt-4 max-w-2xl font-heading text-5xl font-semibold leading-[1.05] tracking-tight">
-            统一管理入口，
+            {translate('login.heroTitleLine1')}
             <br />
-            清晰掌控每一项权限。
+            {translate('login.heroTitleLine2')}
           </h2>
           <p className="mt-5 max-w-lg text-sm leading-7 text-white/55">
-            账号管理、权限分配与操作审计，
-            为你的应用提供统一的后台管理体验。
+            {translate('login.heroDescription')}
           </p>
         </div>
       </section>

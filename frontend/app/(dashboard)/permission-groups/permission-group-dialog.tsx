@@ -6,6 +6,7 @@ import { FormDialog } from '@/components/form-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useI18n } from '@/lib/i18n';
 import type {
   CatalogPermission,
   PermissionGroup,
@@ -32,6 +33,7 @@ export function PermissionGroupDialog({
   onClose: () => void;
   onSave: (values: PermissionGroupFormValues) => Promise<void>;
 }) {
+  const { translate } = useI18n();
   const [name, setName] = useState(permissionGroup?.name ?? '');
   const [description, setDescription] = useState(
     permissionGroup?.description ?? '',
@@ -60,15 +62,21 @@ export function PermissionGroupDialog({
           onClose();
         }
       }}
-      title={permissionGroup ? '编辑权限组' : '新建权限组'}
-      description="勾选权限目录中的能力，用户最终权限取所属组的并集。"
-      submitLabel={permissionGroup ? '保存' : '创建'}
+      title={
+        permissionGroup
+          ? translate('permissionGroups.edit')
+          : translate('permissionGroups.new')
+      }
+      description={translate('permissionGroups.dialogDescription')}
+      submitLabel={
+        permissionGroup ? translate('common.save') : translate('common.create')
+      }
       isSubmitting={isSubmitting}
       contentClassName="max-h-[92svh] overflow-y-auto sm:max-w-2xl"
       onSubmit={async (formEvent) => {
         formEvent.preventDefault();
         if (!name.trim()) {
-          toast.error('请输入权限组名称');
+          toast.error(translate('permissionGroups.nameRequired'));
           return;
         }
         await onSave({
@@ -81,7 +89,7 @@ export function PermissionGroupDialog({
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="permission-group-name">名称</Label>
+          <Label htmlFor="permission-group-name">{translate('common.name')}</Label>
           <Input
             id="permission-group-name"
             value={name}
@@ -90,7 +98,9 @@ export function PermissionGroupDialog({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="permission-group-description">说明</Label>
+          <Label htmlFor="permission-group-description">
+            {translate('common.description')}
+          </Label>
           <Textarea
             id="permission-group-description"
             value={description}
@@ -103,7 +113,9 @@ export function PermissionGroupDialog({
         </div>
       </div>
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium">权限目录</legend>
+        <legend className="text-sm font-medium">
+          {translate('permissions.catalogTitle')}
+        </legend>
         <div className="max-h-96 space-y-4 overflow-y-auto rounded-xl border p-3">
           {Array.from(permissionsBySubject.entries()).map(
             ([subject, subjectPermissions]) => (
@@ -128,7 +140,7 @@ export function PermissionGroupDialog({
                           {permission.action}/{permission.subject}
                         </span>
                         <span className="text-[11px] text-muted-foreground">
-                          {permission.description || '暂无说明'}
+                          {permission.description || translate('common.noDescription')}
                         </span>
                       </span>
                     </label>
@@ -139,7 +151,7 @@ export function PermissionGroupDialog({
           )}
           {permissions.length === 0 ? (
             <p className="py-4 text-center text-sm text-muted-foreground">
-              暂无权限目录
+              {translate('permissions.catalogEmpty')}
             </p>
           ) : null}
         </div>

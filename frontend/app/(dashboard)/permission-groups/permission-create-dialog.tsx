@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useI18n } from '@/lib/i18n';
 
 export function PermissionCreateDialog({
   isSubmitting,
@@ -21,6 +22,7 @@ export function PermissionCreateDialog({
   }) => Promise<void>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const { translate } = useI18n();
   const [action, setAction] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -29,19 +31,19 @@ export function PermissionCreateDialog({
     <>
       <Button variant="outline" onClick={() => setIsOpen(true)}>
         <Plus />
-        新建权限
+        {translate('permissions.new')}
       </Button>
       <FormDialog
         open={isOpen}
         onOpenChange={setIsOpen}
-        title="新建权限"
-        description="action 与 subject 是自由字段，新增后可加入任意权限组。"
-        submitLabel="创建"
+        title={translate('permissions.new')}
+        description={translate('permissions.dialogDescription')}
+        submitLabel={translate('common.create')}
         isSubmitting={isSubmitting}
         onSubmit={async (formEvent) => {
           formEvent.preventDefault();
           if (!action.trim() || !subject.trim()) {
-            toast.error('action 和 subject 不能为空');
+            toast.error(translate('permissions.required'));
             return;
           }
           await onCreate({
@@ -78,7 +80,9 @@ export function PermissionCreateDialog({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="permission-description">说明</Label>
+          <Label htmlFor="permission-description">
+            {translate('common.description')}
+          </Label>
           <Textarea
             id="permission-description"
             value={description}

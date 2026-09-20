@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useI18n } from '@/lib/i18n';
 
 export function ConfirmDialog({
   open,
@@ -30,6 +31,7 @@ export function ConfirmDialog({
   destructive?: boolean;
   onConfirm: () => void;
 }) {
+  const { translate } = useI18n();
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
@@ -38,13 +40,15 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>取消</AlertDialogCancel>
+          <AlertDialogCancel disabled={isPending}>
+            {translate('common.cancel')}
+          </AlertDialogCancel>
           <AlertDialogAction
             variant={destructive ? 'destructive' : 'default'}
             disabled={isPending}
             onClick={onConfirm}
           >
-            {isPending ? '处理中…' : confirmLabel}
+            {isPending ? translate('common.processing') : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

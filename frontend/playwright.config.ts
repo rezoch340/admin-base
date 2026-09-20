@@ -13,6 +13,8 @@ export default defineConfig({
   timeout: 30_000,
   use: {
     baseURL: `http://127.0.0.1:${frontendPort}`,
+    // 用例断言中文文案;Playwright 默认 en-US,首屏会按 Accept-Language 切成英文
+    locale: 'zh-CN',
     trace: 'retain-on-failure',
   },
   projects: [

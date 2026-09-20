@@ -13,7 +13,7 @@
     "seed:admin": "pnpm --dir backend seed:admin",
     "lint": "pnpm --dir backend lint:check && pnpm --dir frontend lint",
     "build": "pnpm --dir backend build && pnpm --dir frontend build",
-    "test": "pnpm --dir backend test --runInBand",
+    "test": "pnpm --dir backend test --runInBand && pnpm --dir frontend test:unit",
     "test:api": "node tests/api-smoke.mjs",
     "test:e2e": "pnpm --dir frontend test:e2e"
   }

@@ -26,6 +26,7 @@ import {
 } from '@/lib/api-client';
 import { useAuthentication } from '@/lib/auth';
 import { formatDateTime } from '@/lib/format';
+import { useI18n, type Translate } from '@/lib/i18n';
 import type {
   PermissionGroup,
   UserRecord,
@@ -55,20 +56,32 @@ const EMPTY_FILTERS: UserFilters = {
   enabled: '',
 };
 
-const FILTER_FIELDS: Array<FilterFieldDefinition<keyof UserFilters>> = [
-  { key: 'username', label: '账号', placeholder: '用户名' },
-  { key: 'role', label: '展示角色', placeholder: '角色名称' },
-  {
-    key: 'enabled',
-    label: '状态',
-    type: 'select',
-    placeholder: '全部状态',
-    options: [
-      { value: 'enabled', label: '启用' },
-      { value: 'disabled', label: '停用' },
-    ],
-  },
-];
+function filterFields(
+  translate: Translate,
+): Array<FilterFieldDefinition<keyof UserFilters>> {
+  return [
+    {
+      key: 'username',
+      label: translate('users.account'),
+      placeholder: translate('common.username'),
+    },
+    {
+      key: 'role',
+      label: translate('users.displayRole'),
+      placeholder: translate('users.rolePlaceholder'),
+    },
+    {
+      key: 'enabled',
+      label: translate('common.status'),
+      type: 'select',
+      placeholder: translate('users.allStatuses'),
+      options: [
+        { value: 'enabled', label: translate('common.enabled') },
+        { value: 'disabled', label: translate('common.disabled') },
+      ],
+    },
+  ];
+}
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
@@ -86,6 +99,7 @@ export default function UsersPage() {
     emptyFilters: EMPTY_FILTERS,
   });
   const { user: authenticatedUser, can, isRoot } = useAuthentication();
+  const { translate, locale } = useI18n();
 
   const permissionGroupsQuery = useQuery({
     queryKey: ['permission-groups'],
@@ -106,11 +120,13 @@ export default function UsersPage() {
         body: JSON.stringify(values),
       }),
     onSuccess: async () => {
-      toast.success('账号已创建');
+      toast.success(translate('users.created'));
       await queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '创建账号失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('users.createFailed')),
+      ),
   });
 
   const userMutation = useMutation({
@@ -130,12 +146,14 @@ export default function UsersPage() {
         body: body === undefined ? undefined : JSON.stringify(body),
       }),
     onSuccess: async () => {
-      toast.success('账号信息已更新');
+      toast.success(translate('users.updated'));
       setConfirmation(null);
       await queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '账号操作失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('users.operationFailed')),
+      ),
   });
 
   const roleMutation = useMutation({
@@ -169,13 +187,15 @@ export default function UsersPage() {
     },
     onSuccess: async (unusedResponse, values) => {
       void unusedResponse;
-      toast.success('权限组已更新');
+      toast.success(translate('users.groupsUpdated'));
       await queryClient.invalidateQueries({
         queryKey: ['user-roles', values.userId],
       });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '权限组更新失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('users.groupsUpdateFailed')),
+      ),
   });
 
   function canMutateUser(userRecord: UserRecord): boolean {
@@ -188,7 +208,7 @@ export default function UsersPage() {
   const columns: Array<DataTableColumn<UserRecord>> = [
     {
       key: 'username',
-      header: '账号',
+      header: translate('users.account'),
       render: (userRecord) => (
         <div>
           <div className="flex items-center gap-2">
@@ -196,74 +216,80 @@ export default function UsersPage() {
             {userRecord.isRoot ? <Badge>Root</Badge> : null}
           </div>
           <p className="mt-0.5 max-w-64 text-xs text-muted-foreground">
-            {userRecord.description || '暂无说明'}
+            {userRecord.description || translate('common.noDescription')}
           </p>
         </div>
       ),
     },
     {
       key: 'role',
-      header: '展示角色',
+      header: translate('users.displayRole'),
       render: (userRecord) => (
         <span className="font-mono text-xs">{userRecord.role}</span>
       ),
     },
     {
       key: 'enabled',
-      header: '状态',
+      header: translate('common.status'),
       render: (userRecord) => (
         <Badge variant={userRecord.enabled ? 'default' : 'secondary'}>
-          {userRecord.enabled ? '启用' : '停用'}
+          {userRecord.enabled
+            ? translate('common.enabled')
+            : translate('common.disabled')}
         </Badge>
       ),
     },
     {
       key: 'last-login',
-      header: '最后登录',
+      header: translate('users.lastLogin'),
       render: (userRecord) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground">
-          {formatDateTime(userRecord.lastLoginAt)}
+          {formatDateTime(userRecord.lastLoginAt, locale)}
         </span>
       ),
     },
     {
       key: 'created',
-      header: '创建时间',
+      header: translate('users.createdAt'),
       render: (userRecord) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground">
-          {formatDateTime(userRecord.createdAt)}
+          {formatDateTime(userRecord.createdAt, locale)}
         </span>
       ),
     },
     {
       key: 'actions',
-      header: '操作',
+      header: translate('common.actions'),
       render: (userRecord) => {
         const accountCanBeMutated = canMutateUser(userRecord);
         return (
           <RowActions
-            label={`操作账号 ${userRecord.username}`}
+            label={translate('users.rowActions', {
+              username: userRecord.username,
+            })}
             actions={[
               {
-                label: '修改资料',
+                label: translate('users.editProfile'),
                 icon: <Pencil />,
                 disabled: !accountCanBeMutated,
                 onSelect: () => setDescriptionUser(userRecord),
               },
               {
-                label: '修改密码',
+                label: translate('users.changePassword'),
                 icon: <KeyRound />,
                 disabled: !accountCanBeMutated,
                 onSelect: () => setPasswordUser(userRecord),
               },
               {
-                label: '配置权限组',
+                label: translate('users.configureGroups'),
                 icon: <ShieldCheck />,
                 disabled: !isRoot || !accountCanBeMutated,
                 onSelect: () => setRoleUser(userRecord),
               },
               {
-                label: userRecord.enabled ? '停用账号' : '启用账号',
+                label: userRecord.enabled
+                  ? translate('users.disable')
+                  : translate('users.enable'),
                 icon: userRecord.enabled ? <PowerOff /> : <Power />,
                 disabled: !accountCanBeMutated,
                 separatorBefore: true,
@@ -271,7 +297,7 @@ export default function UsersPage() {
                   setConfirmation({ type: 'toggle', user: userRecord }),
               },
               {
-                label: '删除账号',
+                label: translate('users.delete'),
                 icon: <Trash2 />,
                 disabled:
                   !can('delete', 'user') ||
@@ -292,8 +318,8 @@ export default function UsersPage() {
     <PermissionBoundary action="read" subject="user">
       <PageHeader
         eyebrow="Administrators"
-        title="后台账号"
-        description="管理员账号的数据、密码、启停、删除和权限组绑定都遵守同一隔离策略。"
+        title={translate('nav.users')}
+        description={translate('users.description')}
         actions={
           can('create', 'user') ? (
             <UserCreateDialog
@@ -309,13 +335,13 @@ export default function UsersPage() {
         <QueryErrorState onRetry={() => table.filterBarProps.onSubmit()} />
       ) : null}
       <FilterBar
-        fields={FILTER_FIELDS}
+        fields={filterFields(translate)}
         {...table.filterBarProps}
       />
       <DataTable
         columns={columns}
         {...table.tableProps}
-        emptyMessage="暂无后台账号"
+        emptyMessage={translate('users.empty')}
         rowKey={(userRecord) => userRecord.id}
         footer={
           <Pagination {...table.paginationProps} />
@@ -373,17 +399,25 @@ export default function UsersPage() {
         }}
         title={
           confirmation?.type === 'delete'
-            ? '删除后台账号'
+            ? translate('users.deleteTitle')
             : confirmation?.user.enabled
-              ? '停用后台账号'
-              : '启用后台账号'
+              ? translate('users.disableTitle')
+              : translate('users.enableTitle')
         }
         description={
           confirmation?.type === 'delete'
-            ? `删除 ${confirmation.user.username} 后，该账号现有会话立即失效。`
-            : `确认切换 ${confirmation?.user.username ?? ''} 的启用状态？`
+            ? translate('users.deleteDescription', {
+                username: confirmation.user.username,
+              })
+            : translate('users.toggleDescription', {
+                username: confirmation?.user.username ?? '',
+              })
         }
-        confirmLabel={confirmation?.type === 'delete' ? '删除' : '确认'}
+        confirmLabel={
+          confirmation?.type === 'delete'
+            ? translate('common.delete')
+            : translate('common.confirm')
+        }
         isPending={userMutation.isPending}
         onConfirm={() => {
           if (!confirmation) {

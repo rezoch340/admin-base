@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { formatDateTime } from '@/lib/format';
+import { useI18n, type MessageKey, type Translate } from '@/lib/i18n';
 import type { SystemLogRecord } from '@/lib/models';
 import { toIsoDateRange, useServerTable } from '@/lib/use-server-table';
 import { combineClassNames } from '@/lib/utils';
@@ -49,26 +50,54 @@ const EMPTY_FILTERS: SystemLogFilters = {
 };
 
 // 常用的放工具栏,动作/资源/目标这几个技术字段收进高级筛选
-const FILTER_FIELDS: Array<FilterFieldDefinition<keyof SystemLogFilters>> = [
-  { key: 'name', label: '事件', placeholder: '事件名称' },
-  { key: 'actorUsername', label: '操作者', placeholder: '用户名' },
-  {
-    key: 'status',
-    label: '结果',
-    type: 'select',
-    placeholder: '全部结果',
-    options: [
-      { value: 'succeeded', label: '成功' },
-      { value: 'failed', label: '失败' },
-    ],
-  },
-  { key: 'from', label: '起始时间', type: 'datetime-local' },
-  { key: 'to', label: '结束时间', type: 'datetime-local' },
-  { key: 'action', label: '动作', placeholder: 'read、create…' },
-  { key: 'subject', label: '资源', placeholder: 'user、rbac…' },
-  { key: 'targetType', label: '目标类型', placeholder: '目标类型' },
-  { key: 'targetName', label: '目标名称', placeholder: '目标名称' },
-];
+function filterFields(
+  translate: Translate,
+): Array<FilterFieldDefinition<keyof SystemLogFilters>> {
+  return [
+    {
+      key: 'name',
+      label: translate('systemLogs.event'),
+      placeholder: translate('systemLogs.eventPlaceholder'),
+    },
+    {
+      key: 'actorUsername',
+      label: translate('systemLogs.actor'),
+      placeholder: translate('common.username'),
+    },
+    {
+      key: 'status',
+      label: translate('systemLogs.result'),
+      type: 'select',
+      placeholder: translate('systemLogs.allResults'),
+      options: [
+        { value: 'succeeded', label: translate('common.succeeded') },
+        { value: 'failed', label: translate('common.failed') },
+      ],
+    },
+    { key: 'from', label: translate('systemLogs.from'), type: 'datetime-local' },
+    { key: 'to', label: translate('systemLogs.to'), type: 'datetime-local' },
+    {
+      key: 'action',
+      label: translate('permissions.action'),
+      placeholder: translate('systemLogs.actionPlaceholder'),
+    },
+    {
+      key: 'subject',
+      label: translate('permissions.subject'),
+      placeholder: translate('permissions.subjectPlaceholder'),
+    },
+    {
+      key: 'targetType',
+      label: translate('systemLogs.targetType'),
+      placeholder: translate('systemLogs.targetType'),
+    },
+    {
+      key: 'targetName',
+      label: translate('systemLogs.targetName'),
+      placeholder: translate('systemLogs.targetName'),
+    },
+  ];
+}
 const ADVANCED_KEYS: Array<keyof SystemLogFilters> = [
   'action',
   'subject',
@@ -82,16 +111,16 @@ function toLocalInput(date: Date): string {
   return new Date(date.getTime() - offsetMinutes * 60_000).toISOString().slice(0, 16);
 }
 
-const QUICK_RANGES: Array<{ label: string; range: () => { from: string; to: string } }> = [
+const QUICK_RANGES: Array<{ label: MessageKey; range: () => { from: string; to: string } }> = [
   {
-    label: '最近 1 小时',
+    label: 'systemLogs.range.lastHour',
     range: () => {
       const now = new Date();
       return { from: toLocalInput(new Date(now.getTime() - 3_600_000)), to: toLocalInput(now) };
     },
   },
   {
-    label: '今天',
+    label: 'systemLogs.range.today',
     range: () => {
       const now = new Date();
       const start = new Date(now);
@@ -100,7 +129,7 @@ const QUICK_RANGES: Array<{ label: string; range: () => { from: string; to: stri
     },
   },
   {
-    label: '最近 7 天',
+    label: 'systemLogs.range.last7Days',
     range: () => {
       const now = new Date();
       return {
@@ -111,11 +140,12 @@ const QUICK_RANGES: Array<{ label: string; range: () => { from: string; to: stri
   },
 ];
 
-const TIMEZONE_LABEL = (() => {
+// 拿不到时区名时为 null,由页面按当前语言给「本地时间」兜底
+const TIMEZONE_NAME: string | null = (() => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   } catch {
-    return '本地时间';
+    return null;
   }
 })();
 
@@ -125,6 +155,7 @@ function hasAnyFilter(filters: SystemLogFilters): boolean {
 
 export default function SystemLogsPage() {
   const [selectedLog, setSelectedLog] = useState<SystemLogRecord | null>(null);
+  const { translate, locale } = useI18n();
   const table = useServerTable<SystemLogRecord, SystemLogFilters>({
     resourceKey: 'system-logs',
     endpoint: '/system-logs',
@@ -137,7 +168,7 @@ export default function SystemLogsPage() {
   const columns: Array<DataTableColumn<SystemLogRecord>> = [
     {
       key: 'event',
-      header: '事件 / 目标',
+      header: translate('systemLogs.eventTarget'),
       className: 'min-w-0',
       render: (systemLog) => (
         <div className="min-w-0">
@@ -152,7 +183,7 @@ export default function SystemLogsPage() {
     },
     {
       key: 'actor',
-      header: '操作者',
+      header: translate('systemLogs.actor'),
       className: 'w-28',
       render: (systemLog) => (
         <span className="block truncate font-mono text-xs" title={systemLog.actorUsername}>
@@ -162,23 +193,23 @@ export default function SystemLogsPage() {
     },
     {
       key: 'status',
-      header: '结果',
+      header: translate('systemLogs.result'),
       className: 'w-20',
       render: (systemLog) => <StatusBadge status={systemLog.status} />,
     },
     {
       key: 'time',
-      header: '时间',
+      header: translate('systemLogs.time'),
       className: 'w-40',
       render: (systemLog) => (
         <span className="whitespace-nowrap font-mono text-xs text-muted-foreground">
-          {formatDateTime(systemLog.createdAt)}
+          {formatDateTime(systemLog.createdAt, locale)}
         </span>
       ),
     },
     {
       key: 'action',
-      header: '动作 / 资源',
+      header: translate('systemLogs.actionSubject'),
       className: 'hidden w-32 xl:table-cell',
       render: (systemLog) => (
         <span className="block truncate font-mono text-xs text-muted-foreground">
@@ -194,7 +225,7 @@ export default function SystemLogsPage() {
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={`查看 ${systemLog.name} 详情`}
+          aria-label={translate('systemLogs.viewDetails', { name: systemLog.name })}
           onClick={() => setSelectedLog(systemLog)}
         >
           <Eye />
@@ -207,11 +238,11 @@ export default function SystemLogsPage() {
     <PermissionBoundary action="read" subject="system-log">
       <PageHeader
         eyebrow="Administrator audit"
-        title="系统日志"
-        description="不可变记录登录、控制面读取、拒绝访问和业务写入,回答谁在什么时候访问或修改了什么。"
+        title={translate('nav.systemLogs')}
+        description={translate('systemLogs.description')}
       />
       <FilterBar
-        fields={FILTER_FIELDS}
+        fields={filterFields(translate)}
         advancedKeys={ADVANCED_KEYS}
         {...table.filterBarProps}
         extra={
@@ -224,10 +255,14 @@ export default function SystemLogsPage() {
                 size="sm"
                 onClick={() => table.filters.applyPatch(quick.range())}
               >
-                {quick.label}
+                {translate(quick.label)}
               </Button>
             ))}
-            <span className="ml-1 text-xs text-muted-foreground">时间按 {TIMEZONE_LABEL} 显示</span>
+            <span className="ml-1 text-xs text-muted-foreground">
+              {translate('systemLogs.timezoneHint', {
+                timezone: TIMEZONE_NAME ?? translate('systemLogs.localTime'),
+              })}
+            </span>
           </span>
         }
       />
@@ -237,14 +272,18 @@ export default function SystemLogsPage() {
       <DataTable
         columns={columns}
         {...table.tableProps}
-        emptyMessage={isFiltered ? '没有匹配的日志' : '还没有系统日志'}
+        emptyMessage={
+          isFiltered
+            ? translate('systemLogs.emptyFiltered')
+            : translate('systemLogs.empty')
+        }
         rowKey={(systemLog) => systemLog.id}
         bodyMaxHeight="max-h-[calc(100vh-24rem)]"
         footer={
           <div className="flex flex-wrap items-center gap-3">
             {isFiltered && table.tableProps.rows.length === 0 && (
               <Button variant="ghost" size="sm" onClick={table.filterBarProps.onReset}>
-                清除筛选条件
+                {translate('systemLogs.clearFilters')}
               </Button>
             )}
             <div className="ml-auto">
@@ -264,7 +303,7 @@ export default function SystemLogsPage() {
         <DialogContent className="max-h-[92svh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex flex-wrap items-center gap-2">
-              {selectedLog?.name ?? '系统日志详情'}
+              {selectedLog?.name ?? translate('systemLogs.detailTitle')}
               {selectedLog && <StatusBadge status={selectedLog.status} />}
             </DialogTitle>
             <DialogDescription>{selectedLog?.description ?? ''}</DialogDescription>
@@ -302,31 +341,40 @@ function TargetLabel({ systemLog }: { systemLog: SystemLogRecord }) {
 
 // 详情:先讲人事时结果,失败原因突出;请求那组技术信息放一起;空元数据折起来
 function LogDetail({ systemLog }: { systemLog: SystemLogRecord }) {
+  const { translate, locale } = useI18n();
   const hasMetadata = Object.keys(systemLog.metadata ?? {}).length > 0;
   const [isMetadataOpen, setIsMetadataOpen] = useState(false);
   return (
     <div className="space-y-4">
       {systemLog.status === 'failed' && (
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-          <p className="text-xs font-medium">失败原因</p>
+          <p className="text-xs font-medium">{translate('systemLogs.failureReason')}</p>
           <p className="mt-0.5 break-all font-mono text-xs">
             {systemLog.errorMessage || `HTTP ${systemLog.statusCode}`}
           </p>
         </div>
       )}
       <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-        <DetailItem label="操作者" value={systemLog.actorUsername} mono />
-        <DetailItem label="时间" value={formatDateTime(systemLog.createdAt)} mono />
-        <DetailItem label="动作 / 资源" value={`${systemLog.action}/${systemLog.subject}`} mono />
-        <DetailItem label="目标" value={<TargetLabel systemLog={systemLog} />} />
+        <DetailItem label={translate('systemLogs.actor')} value={systemLog.actorUsername} mono />
+        <DetailItem
+          label={translate('systemLogs.time')}
+          value={formatDateTime(systemLog.createdAt, locale)}
+          mono
+        />
+        <DetailItem
+          label={translate('systemLogs.actionSubject')}
+          value={`${systemLog.action}/${systemLog.subject}`}
+          mono
+        />
+        <DetailItem label={translate('systemLogs.target')} value={<TargetLabel systemLog={systemLog} />} />
       </dl>
       <section className="rounded-lg border">
         <p className="border-b px-3 py-2 font-mono text-[10px] tracking-[0.18em] text-muted-foreground uppercase">
-          请求
+          {translate('systemLogs.request')}
         </p>
         <dl className="grid gap-x-6 gap-y-2 p-3 text-xs sm:grid-cols-2">
           <DetailItem
-            label="方法 · 状态"
+            label={translate('systemLogs.methodStatus')}
             value={
               <span className="flex items-center gap-2">
                 <Badge variant="secondary" className="font-mono text-[10px]">
@@ -344,7 +392,7 @@ function LogDetail({ systemLog }: { systemLog: SystemLogRecord }) {
             }
           />
           <DetailItem label="IP" value={systemLog.ipAddress || '—'} mono />
-          <DetailItem label="路由" value={systemLog.route} mono className="sm:col-span-2" />
+          <DetailItem label={translate('systemLogs.route')} value={systemLog.route} mono className="sm:col-span-2" />
           {systemLog.userAgent && (
             <DetailItem
               label="User-Agent"
@@ -356,7 +404,7 @@ function LogDetail({ systemLog }: { systemLog: SystemLogRecord }) {
         </dl>
       </section>
       {hasMetadata ? (
-        <JsonBlock title="安全元数据" value={systemLog.metadata} />
+        <JsonBlock title={translate('systemLogs.metadata')} value={systemLog.metadata} />
       ) : (
         <button
           type="button"
@@ -367,7 +415,7 @@ function LogDetail({ systemLog }: { systemLog: SystemLogRecord }) {
           <ChevronDown
             className={combineClassNames('size-3.5 transition-transform', isMetadataOpen && 'rotate-180')}
           />
-          安全元数据(空)
+          {translate('systemLogs.metadataEmpty')}
         </button>
       )}
       {!hasMetadata && isMetadataOpen && (

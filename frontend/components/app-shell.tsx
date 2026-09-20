@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import { AccountPasswordDialog } from '@/components/account-password-dialog';
+import { LocaleSwitcher } from '@/components/locale-switcher';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -30,11 +31,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { useAuthentication } from '@/lib/auth';
+import { useI18n, type MessageKey } from '@/lib/i18n';
 import { combineClassNames } from '@/lib/utils';
 
 interface NavigationItem {
   href: string;
-  label: string;
+  label: MessageKey;
   icon: typeof LayoutDashboard;
   permission?: {
     action: string;
@@ -43,38 +45,36 @@ interface NavigationItem {
 }
 
 const NAVIGATION_GROUPS: Array<{
-  label: string;
+  label: MessageKey;
   items: NavigationItem[];
 }> = [
   {
-    label: '工作台',
-    items: [
-      { href: '/', label: '后台首页', icon: LayoutDashboard },
-    ],
+    label: 'nav.group.workspace',
+    items: [{ href: '/', label: 'nav.home', icon: LayoutDashboard }],
   },
   {
-    label: '访问控制',
+    label: 'nav.group.accessControl',
     items: [
       {
         href: '/users',
-        label: '后台账号',
+        label: 'nav.users',
         icon: Users,
         permission: { action: 'read', subject: 'user' },
       },
       {
         href: '/permission-groups',
-        label: '权限组',
+        label: 'nav.permissionGroups',
         icon: ShieldCheck,
         permission: { action: 'read', subject: 'rbac' },
       },
     ],
   },
   {
-    label: '审计',
+    label: 'nav.group.audit',
     items: [
       {
         href: '/system-logs',
-        label: '系统日志',
+        label: 'nav.systemLogs',
         icon: FileClock,
         permission: { action: 'read', subject: 'system-log' },
       },
@@ -101,13 +101,10 @@ function Brand() {
   );
 }
 
-function Navigation({
-  onNavigate,
-}: {
-  onNavigate?: () => void;
-}) {
+function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { can } = useAuthentication();
+  const { translate } = useI18n();
 
   return (
     <nav className="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
@@ -126,7 +123,7 @@ function Navigation({
         return (
           <section key={navigationGroup.label} className="space-y-1">
             <p className="px-3 pb-1 font-mono text-[9px] font-semibold tracking-[0.18em] text-sidebar-foreground/55 uppercase">
-              {navigationGroup.label}
+              {translate(navigationGroup.label)}
             </p>
             {visibleItems.map((navigationItem) => {
               const isActive =
@@ -154,7 +151,7 @@ function Navigation({
                       isActive ? 'scale-110' : '',
                     )}
                   />
-                  {navigationItem.label}
+                  {translate(navigationItem.label)}
                 </Link>
               );
             })}
@@ -169,6 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [isMobileNavigationOpen, setIsMobileNavigationOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const { user, logout, isRoot, can } = useAuthentication();
+  const { translate } = useI18n();
   const pathname = usePathname();
   return (
     <div className="grid h-svh overflow-hidden lg:grid-cols-[230px_1fr]">
@@ -186,9 +184,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           showCloseButton
           className="gap-0 border-sidebar-border bg-sidebar p-0 text-sidebar-foreground"
         >
-          <SheetTitle className="sr-only">主导航</SheetTitle>
+          <SheetTitle className="sr-only">{translate('nav.main')}</SheetTitle>
           <SheetDescription className="sr-only">
-            Admin Base 控制台页面导航
+            {translate('nav.mainDescription')}
           </SheetDescription>
           <Brand />
           <Navigation onNavigate={() => setIsMobileNavigationOpen(false)} />
@@ -201,45 +199,50 @@ export function AppShell({ children }: { children: ReactNode }) {
             variant="ghost"
             size="icon"
             className="lg:hidden"
-            aria-label="打开导航"
+            aria-label={translate('nav.open')}
             onClick={() => setIsMobileNavigationOpen(true)}
           >
             <Menu />
           </Button>
           <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
             <ShieldCheck className="size-3.5 text-primary" />
-            <span>通用后台管理</span>
+            <span>{translate('app.tagline')}</span>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              render={
-                <Button variant="ghost" className="h-9 gap-2 px-2.5">
-                  <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <UserRound className="size-3.5" />
-                  </span>
-                  <span className="font-mono text-xs">{user?.username}</span>
-                </Button>
-              }
-            />
-            <DropdownMenuContent align="end" className="min-w-48">
-              <DropdownMenuItem disabled>
-                {isRoot ? '种子管理员' : '后台账号'}
-              </DropdownMenuItem>
-              {can('update', 'user') ? (
-                <DropdownMenuItem
-                  onClick={() => setIsPasswordDialogOpen(true)}
-                >
-                  <KeySquare />
-                  修改我的密码
+          <div className="flex items-center gap-1">
+            <LocaleSwitcher />
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" className="h-9 gap-2 px-2.5">
+                    <span className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <UserRound className="size-3.5" />
+                    </span>
+                    <span className="font-mono text-xs">{user?.username}</span>
+                  </Button>
+                }
+              />
+              <DropdownMenuContent align="end" className="min-w-48">
+                <DropdownMenuItem disabled>
+                  {isRoot
+                    ? translate('account.root')
+                    : translate('account.administrator')}
                 </DropdownMenuItem>
-              ) : null}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onClick={logout}>
-                <LogOut />
-                退出登录
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {can('update', 'user') ? (
+                  <DropdownMenuItem
+                    onClick={() => setIsPasswordDialogOpen(true)}
+                  >
+                    <KeySquare />
+                    {translate('account.changeMyPassword')}
+                  </DropdownMenuItem>
+                ) : null}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive" onClick={logout}>
+                  <LogOut />
+                  {translate('account.logout')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
         <main className="min-w-0 flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {/* key 绑路由:路径一变就重挂,入场动画随之重放。

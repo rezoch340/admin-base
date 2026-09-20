@@ -6,6 +6,7 @@ export interface AuthenticatedRequestHeaders extends Record<
   string,
   string | string[] | undefined
 > {
+  'accept-language'?: string;
   authorization?: string;
   'user-agent'?: string;
   'x-forwarded-for'?: string | string[];

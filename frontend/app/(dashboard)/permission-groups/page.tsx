@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getRequestErrorMessage, requestApi } from '@/lib/api-client';
 import { useAuthentication } from '@/lib/auth';
+import { useI18n, type Translate } from '@/lib/i18n';
 import type { CatalogPermission, PermissionGroup } from '@/lib/models';
 import { useServerTable } from '@/lib/use-server-table';
 import { PermissionCreateDialog } from './permission-create-dialog';
@@ -44,23 +45,39 @@ const EMPTY_PERMISSION_FILTERS: PermissionFilters = {
   subject: '',
 };
 
-const GROUP_FILTER_FIELDS: Array<
-  FilterFieldDefinition<keyof PermissionGroupFilters>
-> = [
-  { key: 'name', label: '权限组', placeholder: '权限组名称' },
-  {
-    key: 'permission',
-    label: '所含权限',
-    placeholder: 'action/subject',
-  },
-];
+function groupFilterFields(
+  translate: Translate,
+): Array<FilterFieldDefinition<keyof PermissionGroupFilters>> {
+  return [
+    {
+      key: 'name',
+      label: translate('nav.permissionGroups'),
+      placeholder: translate('permissionGroups.namePlaceholder'),
+    },
+    {
+      key: 'permission',
+      label: translate('permissionGroups.containsPermission'),
+      placeholder: 'action/subject',
+    },
+  ];
+}
 
-const PERMISSION_FILTER_FIELDS: Array<
-  FilterFieldDefinition<keyof PermissionFilters>
-> = [
-  { key: 'action', label: '动作', placeholder: 'read、manage…' },
-  { key: 'subject', label: '资源', placeholder: 'user、rbac…' },
-];
+function permissionFilterFields(
+  translate: Translate,
+): Array<FilterFieldDefinition<keyof PermissionFilters>> {
+  return [
+    {
+      key: 'action',
+      label: translate('permissions.action'),
+      placeholder: translate('permissions.actionPlaceholder'),
+    },
+    {
+      key: 'subject',
+      label: translate('permissions.subject'),
+      placeholder: translate('permissions.subjectPlaceholder'),
+    },
+  ];
+}
 
 export default function PermissionGroupsPage() {
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -73,6 +90,7 @@ export default function PermissionGroupsPage() {
   const [deletingPermission, setDeletingPermission] =
     useState<CatalogPermission | null>(null);
   const { isRoot } = useAuthentication();
+  const { translate } = useI18n();
   const queryClient = useQueryClient();
   const groupTable = useServerTable<PermissionGroup, PermissionGroupFilters>({
     resourceKey: 'permission-groups',
@@ -141,27 +159,34 @@ export default function PermissionGroupsPage() {
       ]);
     },
     onSuccess: async () => {
-      toast.success('权限组已保存');
+      toast.success(translate('permissionGroups.saved'));
       await queryClient.invalidateQueries({
         queryKey: ['permission-groups'],
       });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '保存权限组失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('permissionGroups.saveFailed')),
+      ),
   });
 
   const deleteGroupMutation = useMutation({
     mutationFn: (permissionGroupId: number) =>
       requestApi(`/rbac/roles/${permissionGroupId}`, { method: 'DELETE' }),
     onSuccess: async () => {
-      toast.success('权限组已删除');
+      toast.success(translate('permissionGroups.deleted'));
       setDeletingGroup(null);
       await queryClient.invalidateQueries({
         queryKey: ['permission-groups'],
       });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '删除权限组失败')),
+      toast.error(
+        getRequestErrorMessage(
+          error,
+          translate('permissionGroups.deleteFailed'),
+        ),
+      ),
   });
 
   const createPermissionMutation = useMutation({
@@ -175,18 +200,20 @@ export default function PermissionGroupsPage() {
         body: JSON.stringify(values),
       }),
     onSuccess: async () => {
-      toast.success('权限已创建');
+      toast.success(translate('permissions.created'));
       await queryClient.invalidateQueries({ queryKey: ['permissions'] });
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '创建权限失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('permissions.createFailed')),
+      ),
   });
 
   const deletePermissionMutation = useMutation({
     mutationFn: (permissionId: number) =>
       requestApi(`/rbac/permissions/${permissionId}`, { method: 'DELETE' }),
     onSuccess: async () => {
-      toast.success('权限已删除');
+      toast.success(translate('permissions.deleted'));
       setDeletingPermission(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['permissions'] }),
@@ -194,26 +221,28 @@ export default function PermissionGroupsPage() {
       ]);
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '删除权限失败')),
+      toast.error(
+        getRequestErrorMessage(error, translate('permissions.deleteFailed')),
+      ),
   });
 
 
   const groupColumns: Array<DataTableColumn<PermissionGroup>> = [
     {
       key: 'name',
-      header: '权限组',
+      header: translate('nav.permissionGroups'),
       render: (permissionGroup) => (
         <div>
           <p className="font-medium">{permissionGroup.name}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {permissionGroup.description || '暂无说明'}
+            {permissionGroup.description || translate('common.noDescription')}
           </p>
         </div>
       ),
     },
     {
       key: 'permissions',
-      header: '权限',
+      header: translate('permissions.permission'),
       render: (permissionGroup) => (
         <div className="flex max-w-3xl flex-wrap gap-1">
           {permissionGroup.permissions.map((permission) => (
@@ -222,27 +251,31 @@ export default function PermissionGroupsPage() {
             </Badge>
           ))}
           {permissionGroup.permissions.length === 0 ? (
-            <span className="text-xs text-muted-foreground">尚未配置</span>
+            <span className="text-xs text-muted-foreground">
+              {translate('common.notConfigured')}
+            </span>
           ) : null}
         </div>
       ),
     },
     {
       key: 'actions',
-      header: '操作',
+      header: translate('common.actions'),
       className: 'w-24',
       render: (permissionGroup) =>
         isRoot ? (
           <RowActions
-            label={`操作权限组 ${permissionGroup.name}`}
+            label={translate('permissionGroups.rowActions', {
+              name: permissionGroup.name,
+            })}
             actions={[
               {
-                label: '编辑权限组',
+                label: translate('permissionGroups.edit'),
                 icon: <Pencil />,
                 onSelect: () => setEditingGroup(permissionGroup),
               },
               {
-                label: '删除权限组',
+                label: translate('permissionGroups.delete'),
                 icon: <Trash2 />,
                 destructive: true,
                 separatorBefore: true,
@@ -251,7 +284,9 @@ export default function PermissionGroupsPage() {
             ]}
           />
         ) : (
-          <span className="text-xs text-muted-foreground">仅 Root 可写</span>
+          <span className="text-xs text-muted-foreground">
+            {translate('common.rootOnly')}
+          </span>
         ),
     },
   ];
@@ -259,7 +294,7 @@ export default function PermissionGroupsPage() {
   const permissionColumns: Array<DataTableColumn<CatalogPermission>> = [
     {
       key: 'tuple',
-      header: '权限',
+      header: translate('permissions.permission'),
       render: (permission) => (
         <code className="font-mono text-xs">
           {permission.action}/{permission.subject}
@@ -268,20 +303,22 @@ export default function PermissionGroupsPage() {
     },
     {
       key: 'description',
-      header: '说明',
+      header: translate('common.description'),
       render: (permission) => permission.description || '—',
     },
     {
       key: 'actions',
-      header: '操作',
+      header: translate('common.actions'),
       className: 'w-24',
       render: (permission) =>
         isRoot ? (
           <RowActions
-            label={`操作权限 ${permission.action}/${permission.subject}`}
+            label={translate('permissions.rowActions', {
+              permission: `${permission.action}/${permission.subject}`,
+            })}
             actions={[
               {
-                label: '删除权限',
+                label: translate('permissions.delete'),
                 icon: <Trash2 />,
                 destructive: true,
                 onSelect: () => setDeletingPermission(permission),
@@ -289,7 +326,9 @@ export default function PermissionGroupsPage() {
             ]}
           />
         ) : (
-          <span className="text-xs text-muted-foreground">仅 Root 可写</span>
+          <span className="text-xs text-muted-foreground">
+            {translate('common.rootOnly')}
+          </span>
         ),
     },
   ];
@@ -298,8 +337,8 @@ export default function PermissionGroupsPage() {
     <PermissionBoundary action="read" subject="rbac">
       <PageHeader
         eyebrow="RBAC"
-        title="权限组"
-        description="权限组包含可委派权限，用户可属于多个组；所有 RBAC 写入只允许种子管理员执行。"
+        title={translate('nav.permissionGroups')}
+        description={translate('permissionGroups.description')}
         actions={
           isRoot ? (
             <div className="flex gap-2">
@@ -311,7 +350,7 @@ export default function PermissionGroupsPage() {
               />
               <Button onClick={() => setIsCreatingGroup(true)}>
                 <Plus />
-                新建权限组
+                {translate('permissionGroups.new')}
               </Button>
             </div>
           ) : undefined
@@ -326,15 +365,17 @@ export default function PermissionGroupsPage() {
         />
       ) : null}
       <section className="space-y-3">
-        <h2 className="font-heading text-lg font-semibold">权限组列表</h2>
+        <h2 className="font-heading text-lg font-semibold">
+          {translate('permissionGroups.listTitle')}
+        </h2>
         <FilterBar
-          fields={GROUP_FILTER_FIELDS}
+          fields={groupFilterFields(translate)}
           {...groupTable.filterBarProps}
         />
         <DataTable
           columns={groupColumns}
           {...groupTable.tableProps}
-          emptyMessage="暂无权限组"
+          emptyMessage={translate('permissionGroups.empty')}
           rowKey={(permissionGroup) => permissionGroup.id}
           footer={
             <Pagination {...groupTable.paginationProps} />
@@ -343,19 +384,21 @@ export default function PermissionGroupsPage() {
       </section>
       <section className="space-y-3">
         <div>
-          <h2 className="font-heading text-lg font-semibold">权限目录</h2>
+          <h2 className="font-heading text-lg font-semibold">
+            {translate('permissions.catalogTitle')}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            权限目录使用自由 action/subject 组合，新资源无需修改授权框架。
+            {translate('permissions.catalogDescription')}
           </p>
         </div>
         <FilterBar
-          fields={PERMISSION_FILTER_FIELDS}
+          fields={permissionFilterFields(translate)}
           {...permissionTable.filterBarProps}
         />
         <DataTable
           columns={permissionColumns}
           {...permissionTable.tableProps}
-          emptyMessage="暂无权限"
+          emptyMessage={translate('permissions.empty')}
           rowKey={(permission) => permission.id}
           footer={
             <Pagination {...permissionTable.paginationProps} />
@@ -391,9 +434,11 @@ export default function PermissionGroupsPage() {
             setDeletingGroup(null);
           }
         }}
-        title="删除权限组"
-        description={`删除 ${deletingGroup?.name ?? ''} 后，关联用户将立即失去该组提供的权限。`}
-        confirmLabel="删除"
+        title={translate('permissionGroups.delete')}
+        description={translate('permissionGroups.deleteConfirmDescription', {
+          name: deletingGroup?.name ?? '',
+        })}
+        confirmLabel={translate('common.delete')}
         isPending={deleteGroupMutation.isPending}
         onConfirm={() => {
           if (deletingGroup) {
@@ -408,9 +453,11 @@ export default function PermissionGroupsPage() {
             setDeletingPermission(null);
           }
         }}
-        title="删除权限"
-        description={`删除 ${deletingPermission?.action ?? ''}/${deletingPermission?.subject ?? ''} 后，所有权限组都会失去该权限。`}
-        confirmLabel="删除"
+        title={translate('permissions.delete')}
+        description={translate('permissions.deleteConfirmDescription', {
+          permission: `${deletingPermission?.action ?? ''}/${deletingPermission?.subject ?? ''}`,
+        })}
+        confirmLabel={translate('common.delete')}
         isPending={deletePermissionMutation.isPending}
         onConfirm={() => {
           if (deletingPermission) {

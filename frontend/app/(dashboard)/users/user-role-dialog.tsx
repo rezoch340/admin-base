@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { FormDialog } from '@/components/form-dialog';
 import { QueryErrorState } from '@/components/query-state';
 import { requestApi } from '@/lib/api-client';
+import { useI18n } from '@/lib/i18n';
 import type { PermissionGroup, UserRecord } from '@/lib/models';
 
 export function UserRoleDialog({
@@ -26,6 +27,7 @@ export function UserRoleDialog({
   ) => Promise<void>;
 }) {
   const [selectedRoleIds, setSelectedRoleIds] = useState<number[] | null>(null);
+  const { translate } = useI18n();
   const currentRolesQuery = useQuery({
     queryKey: ['user-roles', user?.id],
     queryFn: () =>
@@ -56,14 +58,16 @@ export function UserRoleDialog({
           onClose();
         }
       }}
-      title="配置权限组"
-      description={`为 ${user?.username ?? ''} 分配权限组，最终权限取所有组的并集。`}
-      submitLabel="保存权限组"
+      title={translate('users.configureGroups')}
+      description={translate('users.roles.description', {
+        username: user?.username ?? '',
+      })}
+      submitLabel={translate('users.roles.submit')}
       isSubmitting={isSubmitting}
       onSubmit={async (formEvent) => {
         formEvent.preventDefault();
         if (!user || !currentRolesQuery.data) {
-          toast.error('当前权限组尚未加载完成');
+          toast.error(translate('users.roles.notLoaded'));
           return;
         }
         await onSave(
@@ -77,7 +81,7 @@ export function UserRoleDialog({
       }}
     >
       {currentRolesQuery.isError ? (
-        <QueryErrorState message="用户权限组加载失败" />
+        <QueryErrorState message={translate('users.roles.loadFailed')} />
       ) : null}
       <div className="max-h-72 space-y-2 overflow-y-auto rounded-xl border p-3">
         {permissionGroups.map((permissionGroup) => (
@@ -96,15 +100,17 @@ export function UserRoleDialog({
                 {permissionGroup.name}
               </span>
               <span className="text-xs text-muted-foreground">
-                {permissionGroup.description || '暂无说明'} ·{' '}
-                {permissionGroup.permissions.length} 项权限
+                {permissionGroup.description || translate('common.noDescription')} ·{' '}
+                {translate('users.roles.permissionCount', {
+                  count: permissionGroup.permissions.length,
+                })}
               </span>
             </span>
           </label>
         ))}
         {permissionGroups.length === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">
-            暂无权限组
+            {translate('users.roles.empty')}
           </p>
         ) : null}
       </div>

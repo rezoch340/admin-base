@@ -50,18 +50,14 @@ export const OPEN_API_RESPONSE_SCHEMAS = {
     properties: {
       statusCode: { type: 'integer', example: 400 },
       message: {
+        description:
+          '业务异常消息按请求的 Accept-Language 返回(支持 zh-CN、en-US,默认 zh-CN);校验失败为字符串数组。',
         oneOf: [
-          { type: 'string', example: '请求参数非法' },
+          { type: 'string', example: '用户名或密码错误' },
           {
             type: 'array',
             items: { type: 'string' },
             example: ['name must be a string'],
-          },
-          {
-            type: 'object',
-            additionalProperties: true,
-            description:
-              'Nest HttpException 的结构化响应，例如 statusCode/message/error。',
           },
         ],
       },

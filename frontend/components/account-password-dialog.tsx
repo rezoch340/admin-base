@@ -7,6 +7,7 @@ import { FormDialog } from '@/components/form-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getRequestErrorMessage, requestApi } from '@/lib/api-client';
+import { useI18n } from '@/lib/i18n';
 
 export function AccountPasswordDialog({
   open,
@@ -18,6 +19,7 @@ export function AccountPasswordDialog({
   onClose: () => void;
 }) {
   const [password, setPassword] = useState('');
+  const { translate } = useI18n();
   const passwordMutation = useMutation({
     mutationFn: (values: { userId: number; password: string }) =>
       requestApi(`/users/${values.userId}/password`, {
@@ -25,11 +27,16 @@ export function AccountPasswordDialog({
         body: JSON.stringify({ password: values.password }),
       }),
     onSuccess: () => {
-      toast.success('密码已修改');
+      toast.success(translate('account.passwordChanged'));
       closeDialog();
     },
     onError: (error) =>
-      toast.error(getRequestErrorMessage(error, '修改密码失败')),
+      toast.error(
+        getRequestErrorMessage(
+          error,
+          translate('account.changePasswordFailed'),
+        ),
+      ),
   });
 
   function closeDialog() {
@@ -45,21 +52,23 @@ export function AccountPasswordDialog({
           closeDialog();
         }
       }}
-      title="修改我的密码"
-      description="密码明文不会写入系统操作日志。"
-      submitLabel="修改密码"
+      title={translate('account.changeMyPassword')}
+      description={translate('account.changePasswordDescription')}
+      submitLabel={translate('account.changePassword')}
       isSubmitting={passwordMutation.isPending}
       onSubmit={(formEvent) => {
         formEvent.preventDefault();
         if (!userId || password.length < 6) {
-          toast.error('新密码至少 6 位');
+          toast.error(translate('account.passwordTooShort'));
           return;
         }
         passwordMutation.mutate({ userId, password });
       }}
     >
       <div className="space-y-2">
-        <Label htmlFor="account-password">新密码</Label>
+        <Label htmlFor="account-password">
+          {translate('account.newPassword')}
+        </Label>
         <Input
           id="account-password"
           type="password"

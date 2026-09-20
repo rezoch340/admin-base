@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useI18n } from '@/lib/i18n';
 
 export interface RowAction {
   label: string;
@@ -22,16 +23,17 @@ export interface RowAction {
 
 export function RowActions({
   actions,
-  label = '打开操作菜单',
+  label,
 }: {
   actions: RowAction[];
   label?: string;
 }) {
+  const { translate } = useI18n();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
         render={
-          <Button variant="ghost" size="icon-sm" aria-label={label}>
+          <Button variant="ghost" size="icon-sm" aria-label={label ?? translate('common.openActionsMenu')}>
             <MoreHorizontal />
           </Button>
         }

@@ -84,5 +84,6 @@ API 测试通过 `SMOKE_ADMIN_USERNAME`、`SMOKE_ADMIN_PASSWORD` 指定实际管
 3. 将业务权限加入种子，或由超级管理员在权限目录创建，并分配给权限组。种子中的超级管理员拥有全权限，普通账号靠权限组授权。
 4. 前端在 `frontend/app/(dashboard)/` 添加页面，在 `components/app-shell.tsx` 添加导航，复用 `lib/api-client.ts`、权限判断与表格组件。
 5. 需要审计的操作加 `@SystemAudit(...)`，仅配置允许记录的字段；读取日志的默认资源映射在 `common/interceptors/system-audit-definition.ts`。
+6. 界面文案走 i18n：前端在 `lib/messages/zh-CN.ts` 加键（`en-US.ts` 以它的键为类型约束，缺译在 typecheck 暴露），组件内用 `useI18n().translate('key', { name })`；后端异常继续用中文原文 `throw`，在 `common/i18n/exception-messages.ts` 补英文译文即可，异常过滤器按 `Accept-Language` 返回。语言存在 `admin_base_locale` cookie，默认 zh-CN，右上角可切换。
 
 保留原项目的版权与来源说明，见本目录的 `LICENSE` 和 `NOTICE`。

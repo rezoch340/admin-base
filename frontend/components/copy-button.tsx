@@ -5,12 +5,13 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { copyTextToClipboard } from '@/lib/clipboard';
+import { useI18n } from '@/lib/i18n';
 
 export function CopyButton({
   value,
   label,
-  successMessage = '已复制',
-  errorMessage = '复制失败，请手动复制',
+  successMessage,
+  errorMessage,
   className,
 }: {
   value: string;
@@ -20,15 +21,16 @@ export function CopyButton({
   className?: string;
 }) {
   const [isCopied, setIsCopied] = useState(false);
+  const { translate } = useI18n();
 
   async function copyValue() {
     try {
       await copyTextToClipboard(value);
       setIsCopied(true);
-      toast.success(successMessage);
+      toast.success(successMessage ?? translate('common.copied'));
       window.setTimeout(() => setIsCopied(false), 1500);
     } catch {
-      toast.error(errorMessage);
+      toast.error(errorMessage ?? translate('common.copyFailed'));
     }
   }
 

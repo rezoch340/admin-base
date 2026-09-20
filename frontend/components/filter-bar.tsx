@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useI18n } from '@/lib/i18n';
 
 export interface FilterOption {
   value: string;
@@ -45,6 +46,7 @@ export function FilterBar<FilterKey extends string>({
   // 塞在按钮行左边的东西,比如时间快捷范围
   extra?: ReactNode;
 }) {
+  const { translate } = useI18n();
   const advancedFields = fields.filter((field) => advancedKeys.includes(field.key));
   const primaryFields = fields.filter((field) => !advancedKeys.includes(field.key));
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(() =>
@@ -73,11 +75,13 @@ export function FilterBar<FilterKey extends string>({
                 className="w-full"
                 aria-label={field.label}
               >
-                <SelectValue placeholder={field.placeholder ?? '全部'} />
+                <SelectValue
+                  placeholder={field.placeholder ?? translate('common.all')}
+                />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>
-                  {field.placeholder ?? '全部'}
+                  {field.placeholder ?? translate('common.all')}
                 </SelectItem>
                 {field.options?.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
@@ -125,7 +129,7 @@ export function FilterBar<FilterKey extends string>({
             className="text-muted-foreground"
             onClick={() => setIsAdvancedOpen((current) => !current)}
           >
-            高级筛选
+            {translate('common.advancedFilters')}
             <ChevronDown
               className={showAdvanced ? 'rotate-180 transition-transform' : 'transition-transform'}
             />
@@ -134,11 +138,11 @@ export function FilterBar<FilterKey extends string>({
         <span className="ml-auto flex gap-2">
           <Button type="button" variant="outline" onClick={onReset}>
             <RotateCcw />
-            重置
+            {translate('common.reset')}
           </Button>
           <Button type="submit">
             <Search />
-            查询
+            {translate('common.search')}
           </Button>
         </span>
       </div>

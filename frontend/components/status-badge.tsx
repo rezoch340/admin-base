@@ -1,14 +1,19 @@
-import { Badge } from '@/components/ui/badge';
+'use client';
 
-const STATUS_LABELS: Record<string, string> = {
-  failed: '失败',
-  succeeded: '成功',
+import { Badge } from '@/components/ui/badge';
+import { useI18n, type MessageKey } from '@/lib/i18n';
+
+const STATUS_LABEL_KEYS: Record<string, MessageKey> = {
+  failed: 'common.failed',
+  succeeded: 'common.succeeded',
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const { translate } = useI18n();
+  const labelKey = STATUS_LABEL_KEYS[status];
   return (
     <Badge variant={status === 'failed' ? 'destructive' : 'default'}>
-      {STATUS_LABELS[status] ?? status}
+      {labelKey ? translate(labelKey) : status}
     </Badge>
   );
 }

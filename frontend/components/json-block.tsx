@@ -2,6 +2,7 @@
 
 import { CopyButton } from '@/components/copy-button';
 import { formatJson } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
 
 export function JsonBlock({
   title,
@@ -11,6 +12,7 @@ export function JsonBlock({
   value: unknown;
 }) {
   const formattedValue = formatJson(value);
+  const { translate } = useI18n();
 
   return (
     <section className="overflow-hidden rounded-xl border bg-[#0a1419] text-slate-200">
@@ -20,8 +22,8 @@ export function JsonBlock({
         </p>
         <CopyButton
           value={formattedValue}
-          label={`复制${title}`}
-          successMessage={`${title}已复制`}
+          label={translate('common.copyTitle', { title })}
+          successMessage={translate('common.copiedTitle', { title })}
           className="text-slate-300 hover:bg-white/10 hover:text-white"
         />
       </header>
